@@ -23,7 +23,7 @@ Built against **Omarchy 4.0.2**.
 
 ## Human Author's Statement
 
-DHH is a racist pile of garbage, and generally unintelligent in matters that aren't related to technology. It's absolutely stupid that his mediocre "distro" is receiving millions of real american dollars in funding.
+DHH is a racist. He's also generally unintelligent in matters that aren't related to technology. It's absolutely baffling that his mediocre "distro" is receiving millions of real American dollars in funding.
 Here are several articles published by him in the past year or so, from his *own* blog, where he demonstrates his tendencies towards racist fearmongering and generally being an idiot:
 - https://world.hey.com/dhh/wolves-sheep-and-gypsies-ba44af6a
 - https://world.hey.com/dhh/three-sacred-cows-that-must-die-so-europe-can-live-1afb203d 
