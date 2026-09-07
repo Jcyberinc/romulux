@@ -1,13 +1,13 @@
 ---
 name: romulux
-description: Audit and repair the Romulux rebrand of this Omarchy system. Use when asked to check, verify, or re-apply Romulux branding, or after an `omarchy update` or a `pacman` upgrade of omarchy/omarchy-settings/plymouth/sddm has reverted customizations. Covers the single Romulan theme lock, the Omarchy->Romulux wordmark in titles/menus/About, the custom boot (Plymouth), login/logout (SDDM) and shutdown screens, and the animated About logo. Triggers: Romulux, rebrand, warbird, romulan theme, boot splash, plymouth, sddm login logo, about screen, branding drift.
+description: Audit and repair the Romulux rebrand of this Omarchy system. Use when asked to check, verify, or re-apply Romulux branding, or after an `omarchy update` or a `pacman` upgrade of omarchy/omarchy-settings/plymouth/sddm has reverted customizations. Covers the single Romulan theme lock, the Omarchy->Romulux wordmark in titles/menus/About, the custom boot (Plymouth), login/logout (SDDM) and shutdown screens, and the animated About logo. Triggers: Romulux, rebrand, romulan theme, insignia, warbird, enterprise-d, boot splash, plymouth, sddm login logo, about screen, branding drift.
 ---
 
 # Romulux
 
-This machine is **Romulux**, an Omarchy subdistro: one theme (`romulan`), a
-warbird wordmark in place of Omarchy's, and custom boot/login/shutdown/About
-screens. Package updates revert parts of it. This skill audits every surface and
+This machine is **Romulux**, an Omarchy subdistro: one theme (`romulan`), the
+Romulan Star Empire insignia in place of Omarchy's mark, and custom
+boot/login/shutdown/About screens. Package updates revert parts of it. This skill audits every surface and
 repairs the drift.
 
 ## Run the audit first
@@ -17,8 +17,8 @@ repairs the drift.
 ```
 
 Read-only, ~45 checks, exit 0 clean / 1 on drift. It prints `[ OK ]`, `[FAIL]`
-and `[NOTE]` lines by area, then the warbird emblem with a per-area status table
-beside it, then a deduplicated list of repair commands.
+and `[NOTE]` lines by area, then the Romulan insignia with a per-area status
+table beside it, then a deduplicated list of repair commands.
 **Always run it before changing anything** — it tells you which of the two
 halves of the rebrand has drifted, and they are repaired very differently.
 
@@ -39,7 +39,7 @@ The audit's closing block is the emblem and the status table, side by side:
 Paste that block into the report **verbatim, inside a fenced code block** —
 copied from the audit output, not retyped. Do not rebuild it as a markdown
 table: a markdown table cannot sit beside ASCII art, so the emblem would end up
-stacked above it, and retyping the art risks corrupting the warbird (the same
+stacked above it, and retyping the art risks corrupting the insignia (the same
 mistake as the "clamp logo" incident below). Add prose or a `[FAIL]` breakdown
 after the block, not in place of it.
 
@@ -83,11 +83,20 @@ After repairing, re-run the audit and report the delta.
 
 ## Hard rules
 
-- **Never touch the branding artwork.** `~/.config/omarchy/branding/about.txt`,
-  the six files in `about-variants/`, `screensaver.txt`, and the Plymouth/SDDM
-  `logo.png` are a hand-made Romulan warbird. It is *not* the Omarchy "clamp"
-  logo — a previous agent misread it as one and tried to replace it. Regenerate
-  a `logo.png` only from `screensaver.txt`, and only when asked.
+- **Never touch the branding artwork.** It is hand-made, and it is three
+  different subjects — do not describe them interchangeably:
+  - `~/.config/omarchy/branding/screensaver.txt`, and the Plymouth/SDDM
+    `logo.png` baked from it, are the **USS Enterprise-D**: the boot, login,
+    logout, shutdown and screensaver graphic.
+  - `~/.config/omarchy/branding/about.txt`, the six files in `about-variants/`,
+    and the menu clone's `logo.png` are the **Romulan Star Empire insignia**:
+    the About screen, the fastfetch logo, and the bar menu button.
+  - `~/.config/omarchy/themes/romulan/backgrounds/1-warbird.jpg` is a depiction
+    of a **Romulan warbird** as it appeared in the original series.
+
+  None of it is the Omarchy "clamp" logo — a previous agent misread the art as
+  one and tried to replace it. Regenerate a `logo.png` only from
+  `screensaver.txt`, and only when asked.
 - **Never edit `/usr/share/omarchy/`.** It is package-owned and reverts. The
   custom Plymouth and SDDM themes live in their own directories
   (`omarchy-ascii`) precisely so updates cannot clobber them.
@@ -118,7 +127,7 @@ After repairing, re-run the audit and report the delta.
 
 Only when the branding ASCII changes. The boot logo is a baked PNG, not live
 text. `-interline-spacing -4` at pointsize 40 gives the ~2:1 character cell the
-art assumes; without it the warbird is vertically stretched.
+art assumes; without it the Enterprise-D is vertically stretched.
 
 ```bash
 magick -background none -fill '#ED5B5A' \
@@ -171,4 +180,4 @@ the change lives on this machine only.
 | `/usr/local/bin/fastfetch` | wrapper injecting a random logo variant |
 | `~/.config/omarchy/extensions/omarchy-menu.jsonc` | menu overrides (About, Style/Learn hidden, wordmark rows) |
 | `~/.config/omarchy/plugins/$USER.menu/` | cloned menu plugin; rebranded bar button |
-| `~/.config/omarchy/branding/` | the warbird artwork — never edit |
+| `~/.config/omarchy/branding/` | the hand-made ASCII art (Enterprise-D, insignia) — never edit |

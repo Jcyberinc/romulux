@@ -54,8 +54,9 @@ BIN="$HOME/.local/bin"
 
 # ------------------------------------------------------------------- artwork
 step "Branding artwork"
-# The hand-made warbird: about.txt, the six about-variants/ and screensaver.txt.
-# Every variant is 52x19 to match about.txt -- omarchy-launch-about measures that
+# Hand-made ASCII: the Romulan Star Empire insignia (about.txt and the six
+# about-variants/) plus the Enterprise-D (screensaver.txt, which the boot and
+# login logo is baked from). Every variant is 52x19 to match about.txt -- omarchy-launch-about measures that
 # file to size the window but shows whichever variant the fastfetch wrapper
 # picked, so an odd-sized one gets framed by a window cut for different art.
 sync_tree "$REPO/config/branding" "$OMA/branding"

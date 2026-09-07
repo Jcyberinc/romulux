@@ -92,7 +92,7 @@ rm_path "$HOME/.claude/skills/romulux" "~/.claude/skills/romulux"
 
 if (( purge )); then
   step "Artwork"
-  warn "--purge deletes the warbird artwork; it is only recoverable from this repo"
+  warn "--purge deletes the hand-made ASCII artwork; it is only recoverable from this repo"
   rm_path "$OMA/branding" "~/.config/omarchy/branding"
 fi
 

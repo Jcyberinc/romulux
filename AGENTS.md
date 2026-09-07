@@ -18,7 +18,7 @@ it:
 ~/.claude/skills/romulux/audit.sh
 ```
 
-Exit 0 = clean, 1 = drift. It ends with the warbird emblem beside a per-area
+Exit 0 = clean, 1 = drift. It ends with the Romulan insignia beside a per-area
 status table — paste that block into your report verbatim, in a fenced code
 block. Do not rebuild it as a markdown table (a markdown table cannot sit
 beside ASCII art) and do not retype the art.
@@ -32,11 +32,20 @@ partial install. It backs up anything it replaces to
 - **`pkexec`, never `sudo`.** `sudo` cannot prompt for a password without a
   TTY, so it hangs or fails from an agent session. Every privileged step here
   is already wrapped in `pkexec`; do not "simplify" one to `sudo`.
-- **Never edit the branding artwork.** `config/branding/about.txt`, the six
-  files in `about-variants/`, `screensaver.txt` and the `logo.png` files are a
-  hand-made Romulan warbird. It is *not* the Omarchy "clamp" logo — an agent
-  once misread it as one and tried to replace it. Regenerate the PNG only from
-  `screensaver.txt`, only with `tools/render-boot-logo.sh`, and only when asked.
+- **Never edit the branding artwork.** It is hand-made, and it is three
+  different subjects — do not describe them interchangeably:
+  - `config/branding/screensaver.txt` and the Plymouth/SDDM `logo.png` baked
+    from it are the **USS Enterprise-D**. That is the boot, login, logout,
+    shutdown and screensaver graphic.
+  - `config/branding/about.txt`, the six files in `about-variants/`, and
+    `plugin/logo.png` are the **Romulan Star Empire insignia**. That is the
+    About screen, the fastfetch logo, and the bar menu button.
+  - `config/themes/romulan/backgrounds/1-warbird.jpg` is a depiction of a
+    **Romulan warbird** as it appeared in the original series.
+
+  None of it is the Omarchy "clamp" logo — an agent once misread the art as one
+  and tried to replace it. Regenerate the PNG only from `screensaver.txt`, only
+  with `tools/render-boot-logo.sh`, and only when asked.
 - **Never edit `/usr/share/omarchy/`.** It is package-owned and reverts on
   update. That is why the Plymouth and SDDM themes live in their own
   `omarchy-ascii` directories.

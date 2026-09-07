@@ -56,7 +56,8 @@
   // The stock row draws U+E900 from the packaged "omarchy" icon font, i.e.
   // the Omarchy clamp mark. Menu rows can only render a font glyph (the
   // Image branch in Menu.qml is reserved for kind=="app"), so the rebrand
-  // swaps in the warbird (md-bird) from the menu font's Nerd Font fallback
+  // swaps in a bird glyph (md-bird) from the menu font's Nerd Font fallback,
+  // standing in for the Romulan insignia the bar button draws as an image,
   // and drops iconFont so the row stops reaching for omarchy.ttf.
   "update.omarchy": {"icon":"󱗆","label":"Romulux","action":"omarchy-launch-floating-terminal-with-presentation omarchy-update"}
 }

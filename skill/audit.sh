@@ -192,7 +192,7 @@ if [[ -n $(menu_row update.omarchy | grep -F 'iconFont') ]]; then
   fail "update.omarchy still sets iconFont -- it will draw the Omarchy clamp mark" \
        "drop iconFont from the \"update.omarchy\" row in $MENU"
 else
-  pass "update.omarchy uses the warbird glyph, not the omarchy icon font"
+  pass "update.omarchy uses the bird glyph, not the omarchy icon font"
 fi
 
 if [[ -n $(menu_row learn | grep -F '"when":"false"') ]]; then
@@ -204,7 +204,7 @@ fi
 if [[ -n $MENU_ID ]]; then
   pass "$MENU_ID plugin clone present (rebranded bar menu button)"
   if grep -q 'logo.png' "$MENU_DIR/BarWidget.qml" 2>/dev/null && [[ -f $MENU_DIR/logo.png ]]; then
-    pass "bar menu button draws the warbird logo.png"
+    pass "bar menu button draws the Romulan insignia logo.png"
   else
     fail "bar menu button fell back to the \\ue900 Omarchy clamp glyph" \
          "restore BarWidget.qml + logo.png in ~/.config/omarchy/plugins/$MENU_ID"
@@ -254,9 +254,9 @@ fi
 if [[ -f $PLY_DIR/logo.png ]]; then
   if cmp -s "$PLY_DIR/logo.png" /usr/share/plymouth/themes/omarchy/logo.png; then
     fail "boot logo is byte-identical to the stock Omarchy logo" \
-         "re-render logo.png from $BRANDING/screensaver.txt (see the memory for the magick recipe)"
+         "re-render logo.png from $BRANDING/screensaver.txt -- the Enterprise-D art (see tools/render-boot-logo.sh)"
   else
-    pass "boot logo differs from stock (custom warbird render)"
+    pass "boot logo differs from stock (custom Enterprise-D render)"
   fi
 else
   fail "boot logo.png missing from $PLY_DIR" ""
@@ -377,7 +377,7 @@ else
 fi
 
 [[ -f $BRANDING/screensaver.txt ]] \
-  && pass "screensaver.txt present (source art for the boot logo)" \
+  && pass "screensaver.txt present (Enterprise-D, source art for the boot logo)" \
   || fail "screensaver.txt missing" ""
 
 # ------------------------------------------------------- update resilience
@@ -399,9 +399,9 @@ for h in post-update post-boot; do
 done
 
 # ---------------------------------------------------------------- summary
-# Per-area tally, printed beside the warbird emblem. The art is *read* from
+# Per-area tally, printed beside the emblem. The art is *read* from
 # ~/.config/omarchy/branding/about.txt and never written -- it is the same 52x19
-# warbird the About screen frames. Composition happens in awk because bash
+# Romulan Star Empire insignia the About screen frames. Composition happens in awk because bash
 # printf pads by bytes, and the box-drawing glyphs are multi-byte: %-52s would
 # short-pad every line and shear the right-hand column.
 summary_table() {

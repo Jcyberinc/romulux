@@ -22,9 +22,9 @@
 
 # Romulux
 
-A Romulan-themed rebrand of [Omarchy](https://omarchy.org): one theme, a
-warbird wordmark in place of Omarchy's, and custom boot, login, shutdown and
-About screens.
+A Romulan-themed rebrand of [Omarchy](https://omarchy.org): one theme, the
+Romulan Star Empire insignia in place of Omarchy's mark, and custom boot,
+login, shutdown and About screens.
 
 Romulux is not a fork. It installs *beside* Omarchy — everything here is a
 config file, a helper script, or a theme directory of its own, so `omarchy
@@ -65,7 +65,7 @@ re-render the logo.
 | Surface | How |
 |---|---|
 | Theme | a single user theme, `romulan`; the **Style** submenu is hidden so nothing can switch away |
-| Boot / shutdown splash | its own Plymouth theme `omarchy-ascii`, with the warbird as a baked PNG |
+| Boot / shutdown splash | its own Plymouth theme `omarchy-ascii`, with the Enterprise-D as a baked PNG |
 | Login / logout screen | its own SDDM theme carrying the same logo |
 | Wordmark | `/etc/os-release`, the wayland session name, the floating-terminal title, two menu rows |
 | Bar menu button | a clone of the menu plugin drawing `logo.png` instead of the Omarchy clamp glyph |
@@ -107,7 +107,7 @@ hook, a menu entry or an agent session.
 ```
 
 Read-only, ~45 checks, exit 0 clean / 1 on drift. It prints `[ OK ]`, `[FAIL]`
-and `[NOTE]` lines by area, then the warbird beside a per-area status table,
+and `[NOTE]` lines by area, then the insignia beside a per-area status table,
 then the exact repair command for anything that failed.
 
 `[NOTE]` lines are not problems. They record things that are deliberately
@@ -133,16 +133,22 @@ fresh and applies only the two-file Romulux delta on top.
 
 ## Making it your own
 
-The warbird is drawn by hand in ASCII and everything renders from it:
+The art is hand-made, and it is three different subjects — worth knowing before
+you swap any of it out:
 
-- `config/branding/screensaver.txt` — the source art. `tools/render-boot-logo.sh`
-  bakes the boot and login PNG from it.
-- `config/branding/about.txt` + `about-variants/*.txt` — the About screen.
+- `config/branding/screensaver.txt` — the **USS Enterprise-D**, in ASCII. This
+  is the source art for the boot, login, logout, shutdown and screensaver
+  graphic; `tools/render-boot-logo.sh` bakes the PNG from it.
+- `config/branding/about.txt` + `about-variants/*.txt` — the **Romulan Star
+  Empire insignia**, in ASCII, for the About screen and the fastfetch logo.
   **Every variant must be exactly 52x19**: `omarchy-about-cycle` measures
   `about.txt` to size the window but displays whichever variant the `fastfetch`
   wrapper picked, so an odd-sized one gets framed by a window cut for different
   art. The audit measures all of them.
-- `plugin/logo.png` — the bar button.
+- `plugin/logo.png` — the same **Romulan Star Empire insignia** as a raster, for
+  the bar menu button.
+- `config/themes/romulan/backgrounds/1-warbird.jpg` — the wallpaper: a depiction
+  of a **Romulan warbird** as it appeared in the original series.
 
 One trap worth knowing if you edit the menu: **a partial override in
 `omarchy-menu.jsonc` blanks the fields you omit.** Missing keys normalize to
@@ -152,8 +158,37 @@ claiming existing fields are kept is wrong.
 
 ## Credits
 
-Omarchy is by [Basecamp](https://omarchy.org) — Romulux is a reskin of their
-work and depends on it entirely. Star Trek and the Romulan iconography it
-alludes to are trademarks of Paramount; this is unaffiliated fan work.
+Romulux is an independent reskin of [Omarchy](https://omarchy.org) and is not
+affiliated with, endorsed by, or supported by that project.
+
+<!-- ROMULUX-MAINTAINER-STATEMENT
+     The paragraph below is the repo owner's own words. It is not to be
+     edited, reworded, summarised, softened or "fixed" by any tool, agent or
+     contributor. Replace the placeholder line with your text and leave it
+     exactly as written thereafter.
+-->
+
+DHH is a racist pile of garbage, and generally unintelligent in matters that aren't related 
+to technology. It's absolutely stupid that his mediocre "distro" is receiving millions of 
+real american dollars in funding.
+Here are several articles published by him in the past year or so, from his *own* blog, 
+where he demonstrates his tendencies towards racist fearmongering and generally being an idiot:
+https://world.hey.com/dhh/wolves-sheep-and-gypsies-ba44af6a
+https://world.hey.com/dhh/three-sacred-cows-that-must-die-so-europe-can-live-1afb203d 
+https://world.hey.com/dhh/the-rape-of-britain-610412f8
+https://world.hey.com/dhh/give-me-ai-slop-over-human-sludge-any-day-8c4b747d
+https://world.hey.com/dhh/calling-someone-a-nazi-is-a-permission-slip-for-violence-4bfbbb82
+https://world.hey.com/dhh/it-s-beginning-to-feel-like-the-80s-in-america-again-68c2708e
+https://world.hey.com/dhh/american-hype-6f7afd1b
+
+That being said, I've used Ruby On Rails heavily in the past and I still think it's a great
+tool. Omarchy really just isn't that good tho lol. If you insist on using it to test it or
+whatever like I am. I encourage you to file off the branding like I did!
+
+Probably don't run this on your computer idk what claude did.
+<!-- END ROMULUX-MAINTAINER-STATEMENT -->
+
+Star Trek and the Romulan iconography it alludes to are trademarks of
+Paramount; this is unaffiliated fan work.
 
 MIT licensed. See [LICENSE](LICENSE).

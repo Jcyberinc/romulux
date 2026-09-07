@@ -6,9 +6,9 @@
 #   tools/render-boot-logo.sh              render into the repo
 #   tools/render-boot-logo.sh --install    render, then install it system-wide
 #
-# -interline-spacing -4 at pointsize 40 is what gives the ~2:1 character cell
-# the art was drawn for. Without it every glyph row gets its full font leading
-# and the warbird comes out vertically stretched.
+# The art is the Enterprise-D. -interline-spacing -4 at pointsize 40 is what
+# gives the ~2:1 character cell it was drawn for; without it every glyph row gets
+# its full font leading and the ship comes out vertically stretched.
 set -euo pipefail
 
 REPO="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
