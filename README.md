@@ -34,6 +34,11 @@ skill so an agent can do the checking and repairing for you.
 
 Built against **Omarchy 4.0.2**.
 
+![The Romulux About screen cycling its logo variants](docs/about-screen.gif)
+
+The About screen, cycling the Romulan Star Empire insignia through `ttfx`
+effects on the `romulan` theme.
+
 ## Install
 
 ```bash
