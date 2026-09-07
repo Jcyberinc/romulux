@@ -47,18 +47,24 @@ step "Boot splash (Plymouth theme $PLY_THEME)"
 # The chrome (bullet, entry, lock, progress bars) is seeded from the stock theme
 # rather than vendored here -- only the logo and the script are Romulux.
 if [[ -d $STOCK_PLY ]]; then
-  if dry; then
-    plan "seed $PLY_DIR with the stock theme's chrome images"
+  missing=()
+  while IFS= read -r -d '' f; do
+    rel="${f#"$STOCK_PLY"/}"
+    case "$rel" in
+    logo.png | omarchy.plymouth | omarchy.script) continue ;;   # replaced by ours
+    esac
+    [[ -e $PLY_DIR/$rel ]] || missing+=("$rel")
+  done < <(find "$STOCK_PLY" -type f -print0)
+  if (( ${#missing[@]} == 0 )); then
+    skip "chrome images already present"
+  elif dry; then
+    plan "seed $PLY_DIR with ${#missing[@]} chrome image(s): ${missing[*]}"
   else
     install -d -m755 "$PLY_DIR"
-    while IFS= read -r -d '' f; do
-      rel="${f#"$STOCK_PLY"/}"
-      case "$rel" in
-      logo.png | omarchy.plymouth | omarchy.script) continue ;;   # replaced by ours
-      esac
-      [[ -e $PLY_DIR/$rel ]] || install -Dm644 "$f" "$PLY_DIR/$rel"
-    done < <(find "$STOCK_PLY" -type f -print0)
-    ok "chrome images present"
+    for rel in "${missing[@]}"; do
+      install -Dm644 "$STOCK_PLY/$rel" "$PLY_DIR/$rel"
+    done
+    ok "seeded ${#missing[@]} chrome image(s)"
   fi
 else
   warn "no stock plymouth theme at $STOCK_PLY to seed the chrome images from"
@@ -104,6 +110,8 @@ if [[ ! -x $sync_helper ]]; then
   warn "$sync_helper is missing -- run install.sh (its user-owned half installs it) first"
 elif [[ ! -d /usr/share/sddm/themes/omarchy ]]; then
   warn "no packaged SDDM theme at /usr/share/sddm/themes/omarchy to build from; skipping"
+elif cmp -s "$PLY_DIR/logo.png" "/usr/share/sddm/themes/$PLY_THEME/logo.png" 2>/dev/null; then
+  skip "SDDM theme already carries the current logo"
 elif dry; then
   plan "run $sync_helper to build /usr/share/sddm/themes/$PLY_THEME with the branded logo"
 else
@@ -122,8 +130,12 @@ sync_file "$REPO/system/bin/fastfetch" /usr/local/bin/fastfetch 755 /usr/local/b
 # ------------------------------------------------------- wordmark in /etc etc
 step "Wordmark in package-owned files"
 reapply="$USER_HOME/.local/bin/romulux-reapply-root"
+reporter="$USER_HOME/.local/bin/romulux-reapply"
 if [[ ! -x $reapply ]]; then
   warn "$reapply is missing -- run install.sh first"
+elif [[ -x $reporter ]] && [[ -z "$("$reporter" 2>/dev/null)" ]]; then
+  # The reporter prints nothing when all five package-owned items are branded.
+  skip "os-release, session entry and terminal title already branded"
 elif dry; then
   plan "run $reapply (os-release, session name, floating-terminal title)"
 else
