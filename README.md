@@ -169,20 +169,26 @@ affiliated with, endorsed by, or supported by that project.
 -->
 
 DHH is a racist pile of garbage, and generally unintelligent in matters that aren't related 
-to technology. It's absolutely stupid that his mediocre "distro" is receiving millions of 
+to technology. 
+
+It's absolutely stupid that his mediocre "distro" is receiving millions of 
 real american dollars in funding.
+
 Here are several articles published by him in the past year or so, from his *own* blog, 
 where he demonstrates his tendencies towards racist fearmongering and generally being an idiot:
-https://world.hey.com/dhh/wolves-sheep-and-gypsies-ba44af6a
-https://world.hey.com/dhh/three-sacred-cows-that-must-die-so-europe-can-live-1afb203d 
-https://world.hey.com/dhh/the-rape-of-britain-610412f8
-https://world.hey.com/dhh/give-me-ai-slop-over-human-sludge-any-day-8c4b747d
-https://world.hey.com/dhh/calling-someone-a-nazi-is-a-permission-slip-for-violence-4bfbbb82
-https://world.hey.com/dhh/it-s-beginning-to-feel-like-the-80s-in-america-again-68c2708e
-https://world.hey.com/dhh/american-hype-6f7afd1b
+
+- https://world.hey.com/dhh/wolves-sheep-and-gypsies-ba44af6a
+- https://world.hey.com/dhh/three-sacred-cows-that-must-die-so-europe-can-live-1afb203d 
+- https://world.hey.com/dhh/the-rape-of-britain-610412f8
+- https://world.hey.com/dhh/give-me-ai-slop-over-human-sludge-any-day-8c4b747d
+- https://world.hey.com/dhh/calling-someone-a-nazi-is-a-permission-slip-for-violence-4bfbbb82
+- https://world.hey.com/dhh/it-s-beginning-to-feel-like-the-80s-in-america-again-68c2708e
+- https://world.hey.com/dhh/american-hype-6f7afd1b
 
 That being said, I've used Ruby On Rails heavily in the past and I still think it's a great
-tool. Omarchy really just isn't that good tho lol. If you insist on using it to test it or
+tool. 
+
+Omarchy really just isn't that good tho lol. If you insist on using it to test it or
 whatever like I am. I encourage you to file off the branding like I did!
 
 Probably don't run this on your computer idk what claude did.
