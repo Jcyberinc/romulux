@@ -167,9 +167,9 @@ Here are several articles published by him in the past year or so, from his *own
 
 That being said, I've used [Ruby On Rails](https://rubyonrails.org/) heavily in the past and I still think it's a great tool. 
 
-Omarchy really just isn't that good tho lol. If you insist on using it to test it or whatever like I am. I encourage you to file off the branding like I did!
+Omarchy really just isn't that good tho lol. If you insist on using it to test it or whatever like I am, I encourage you to file off the branding like I did!
 
-Probably don't run this on your computer idk what claude did.
+Probably don't run this on your computer, idk what claude did.
 <!-- END ROMULUX-MAINTAINER-STATEMENT -->
 
 Star Trek and the Romulan iconography it alludes to are trademarks of
