@@ -1,0 +1,56 @@
+#!/bin/bash
+# Rebuild the local `omarchy-ascii` SDDM theme from the packaged `omarchy`
+# theme, swapping in the branded Plymouth logo.
+#
+# Omarchy does not sync the SDDM logo from the Plymouth theme, and the
+# packaged theme under /usr/share/sddm/themes/omarchy is owned by
+# omarchy-settings, so it is replaced on update. Keeping our copy in a
+# separate directory means updates cannot clobber it -- but it also means
+# upstream changes to the theme are not picked up until this runs.
+#
+# Run after changing the Plymouth logo, or after an omarchy update that
+# touched the SDDM theme.
+#
+# The logo is read from $LOGO_THEME by name, NOT from whatever
+# `plymouth-set-default-theme` currently reports. That coupling was a
+# foot-gun: an omarchy update resets the Plymouth default back to the stock
+# `omarchy` theme, so running this afterwards would quietly copy the stock
+# Omarchy logo over the branded one and undo the rebrand. Naming the theme
+# makes the source explicit and makes this script idempotent no matter what
+# state the boot splash is in. Pass a theme name to override.
+
+set -euo pipefail
+
+LOGO_THEME=${1:-omarchy-ascii}
+
+src=/usr/share/sddm/themes/omarchy
+dst=/usr/share/sddm/themes/omarchy-ascii
+logo="/usr/share/plymouth/themes/$LOGO_THEME/logo.png"
+
+[[ -f $logo ]] || { echo "no logo for plymouth theme '$LOGO_THEME' at $logo" >&2; exit 1; }
+
+# Warn but do not stop: the SDDM theme and the boot splash are independent, and
+# romulux-reapply-root is what puts the Plymouth default back.
+current=$(plymouth-set-default-theme 2>/dev/null || true)
+if [[ -n $current && $current != "$LOGO_THEME" ]]; then
+  echo "note: plymouth default is '$current', taking the logo from '$LOGO_THEME' anyway" >&2
+  echo "      run 'pkexec ~/.local/bin/romulux-reapply-root' to fix the boot splash" >&2
+fi
+
+# An agent or a menu entry has no terminal for a sudo password prompt. Already
+# root (the Romulux installer calls this from its privileged half) means neither
+# is wanted -- pkexec as root re-authenticates for nothing and fails outright
+# when there is no authentication agent.
+run() {
+  if (( EUID == 0 )); then "$@"
+  elif [[ -t 0 ]]; then sudo "$@"
+  else pkexec "$@"
+  fi
+}
+
+run install -d "$dst"
+run cp -rT "$src" "$dst"
+run cp "$logo" "$dst/logo.png"
+run sed -i 's/^Name=.*/Name=Omarchy ASCII/' "$dst/metadata.desktop"
+
+echo "synced $logo -> $dst/logo.png"

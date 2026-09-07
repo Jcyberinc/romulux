@@ -1,0 +1,11 @@
+[Plymouth Theme]
+Name=Omarchy ASCII
+Description=Omarchy splash screen with the screensaver ASCII branding as the logo.
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/omarchy-ascii
+ScriptFile=/usr/share/plymouth/themes/omarchy-ascii/omarchy-ascii.script
+ConsoleLogBackgroundColor=0x1a1b26
+MonospaceFont=Cantarell 11
+Font=Cantarell 11

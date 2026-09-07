@@ -1,0 +1,90 @@
+#!/bin/bash
+# Privileged half of the Romulux re-apply. Run it as:
+#
+#     pkexec ~/.local/bin/romulux-reapply-root
+#
+# pkexec and not sudo: sudo cannot prompt for a password without a TTY on this
+# machine, so it fails from an agent session, a menu entry, or any other
+# non-terminal caller. The unprivileged reporter (~/.local/bin/romulux-reapply,
+# also installed as the post-update hook) decides when this is worth running.
+#
+# Re-applies only the customisations that live in package-owned paths and are
+# therefore reverted by `omarchy update`:
+#   - the floating-terminal window title is reset to "Omarchy"
+#   - the wayland session entry is regenerated from the packaged template
+#   - /etc/os-release is restored by an omarchy-settings reinstall
+#   - /etc/plymouth/plymouthd.conf is owned by the plymouth package, so a
+#     plymouth update points the boot splash back at the stock theme
+#
+# Artwork is never touched here: about.txt, about-variants/ and the
+# Plymouth/SDDM logo.png files are user-owned and already carry the intended
+# design.
+#
+# Deliberately NOT handled:
+#   - the stock themes under $OMARCHY_PATH/themes. An earlier version deleted
+#     them, which is a fight with pacman that pacman always wins: every omarchy
+#     update reinstalls all 22, so the "reverted" report fired on every single
+#     update forever. Hiding the Style submenu in omarchy-menu.jsonc already
+#     means nothing can reach them, so deleting the files bought nothing and
+#     left the omarchy package failing `pacman -Qkk`.
+#   - the fastfetch About-screen version line. It now lives in
+#     ~/.config/fastfetch/config.jsonc, which wins over /etc/fastfetch in
+#     fastfetch's search order (`fastfetch --list-config-paths`) and is
+#     user-owned, so no package update can revert it.
+set -euo pipefail
+
+OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
+# The real script. $OMARCHY_PATH/bin/<name> is packaged as a *symlink* to this
+# path, and plain `sed -i` on a symlink replaces the link with a regular file
+# rather than editing through it. That detached copy then shadows the package
+# forever ($OMARCHY_PATH/bin is first on PATH) and silently pins whatever
+# script body existed the day it was branded. Edit the target, keep the link.
+TERMINAL_BIN=/usr/bin/omarchy-launch-floating-terminal-with-presentation
+TERMINAL_LINK="$OMARCHY_PATH/bin/omarchy-launch-floating-terminal-with-presentation"
+SESSION=/usr/local/share/wayland-sessions/omarchy.desktop
+PLYMOUTH_THEME=omarchy-ascii
+
+# Heal a link an earlier run (or an earlier version of this script) detached.
+if [[ -e $TERMINAL_LINK && ! -L $TERMINAL_LINK && -f $TERMINAL_BIN ]]; then
+  ln -sfn "$TERMINAL_BIN" "$TERMINAL_LINK"
+  echo "  restored the packaged symlink at $TERMINAL_LINK"
+fi
+
+if [[ -f $TERMINAL_BIN ]] && grep -q -- '--title=Omarchy' "$TERMINAL_BIN"; then
+  sed -i 's/--title=Omarchy/--title=Romulux/' "$TERMINAL_BIN"
+  echo "  floating terminal title rebranded"
+fi
+
+if [[ -f $SESSION ]] && grep -q '^Name=Omarchy' "$SESSION"; then
+  sed -i 's/^Name=Omarchy (Hyprland uwsm)$/Name=Romulux (Hyprland uwsm)/' "$SESSION"
+  sed -i 's/^Comment=Omarchy Hyprland session managed by uwsm$/Comment=Romulux Hyprland session managed by uwsm/' "$SESSION"
+  echo "  session entry rebranded"
+fi
+
+# /etc survives a normal update; re-assert only if a reinstall reset it.
+# ID / ID_LIKE / LOGO and the upstream URLs are left alone: those are internal
+# keys and real project links, not the on-screen product name.
+if [[ -f /etc/os-release ]] && grep -q '^NAME="Omarchy"' /etc/os-release; then
+  sed -i 's/^NAME="Omarchy"$/NAME="Romulux"/' /etc/os-release
+  sed -i 's/^PRETTY_NAME="Omarchy"$/PRETTY_NAME="Romulux"/' /etc/os-release
+  echo "  os-release rebranded (About screen OS line, TTY login banner)"
+fi
+
+# Boot splash. plymouth-set-default-theme rewrites the package-owned
+# /etc/plymouth/plymouthd.conf, so this is the piece a plymouth update reverts.
+#
+# --rebuild-initrd only matters when plymouth is actually inside the initramfs.
+# This machine's HOOKS line carries no plymouth hook, so the splash runs from
+# the real root and a mkinitcpio run would be several wasted minutes; the check
+# keeps the script correct if that ever changes.
+if [[ -d /usr/share/plymouth/themes/$PLYMOUTH_THEME ]] \
+   && [[ "$(plymouth-set-default-theme)" != "$PLYMOUTH_THEME" ]]; then
+  if grep -qE '^HOOKS=.*plymouth' /etc/mkinitcpio.conf 2>/dev/null; then
+    plymouth-set-default-theme --rebuild-initrd "$PLYMOUTH_THEME"
+  else
+    plymouth-set-default-theme "$PLYMOUTH_THEME"
+  fi
+  echo "  plymouth theme set back to $PLYMOUTH_THEME"
+fi
+
+exit 0

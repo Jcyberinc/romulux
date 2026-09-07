@@ -1,0 +1,35 @@
+# Romulan — sampled from a Romulan Bird-of-Prey at warp.
+# Greens taken from the nacelle plasma trails and the port-side flare;
+# golds/coppers from the wing scallops; blues from the warp streaks.
+
+mode = "dark"
+
+accent = "#3EE8A1"
+selection = "#245E4C"
+muted = "#4F6E5C"
+
+background = "#0A1512"
+dark_background = "#06100E"
+darker_background = "#030807"
+lighter_background = "#173625"
+
+foreground = "#C2DCC4"
+dark_foreground = "#7FBF9B"
+light_foreground = "#D1F7C9"
+bright_foreground = "#E1FDFA"
+
+red = "#C4573F"
+yellow = "#AB993D"
+orange = "#B1783D"
+green = "#419B47"
+cyan = "#2FB89B"
+blue = "#4C90B4"
+magenta = "#A8709C"
+brown = "#5A581C"
+
+bright_red = "#E1795F"
+bright_yellow = "#ECC85A"
+bright_green = "#5EE15C"
+bright_cyan = "#69FEE0"
+bright_blue = "#9CDAF4"
+bright_magenta = "#C795BC"

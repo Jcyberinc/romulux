@@ -1,0 +1,5 @@
+#!/bin/bash
+# Shim. The real reporter lives in ~/.local/bin/romulux-reapply so it can also
+# be run by hand; this used to be a byte-identical second copy, which meant
+# every edit had to be made twice or the two would drift.
+exec "$HOME/.local/bin/romulux-reapply" "$@"

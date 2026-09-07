@@ -1,0 +1,34 @@
+#!/bin/bash
+# Picks a random Omarchy "About" logo from ~/.config/omarchy/branding/about-variants
+# and hands it to the real fastfetch, then gets out of the way.
+#
+# Why a wrapper and not config: fastfetch has no "command" logo type, so the logo
+# must be a file on disk. Rewriting branding/about.txt per launch is not an option
+# either -- omarchy-launch-about watches that file's mtime to decide when to
+# repaint, so a logo that rewrote it would drive the render loop forever.
+# Passing --logo on the command line leaves about.txt untouched.
+#
+# Every variant must stay 52x19, matching about.txt. omarchy-launch-about measures
+# that file to size the About window but displays whatever this picks, so a variant
+# of a different size would be framed by a window cut for the wrong one.
+
+REAL=/usr/bin/fastfetch
+VARIANTS="$HOME/.config/omarchy/branding/about-variants"
+
+# The caller already picked a logo -- including omarchy-launch-about's
+# `fastfetch --logo none` measuring pass -- so don't second-guess it.
+for arg in "$@"; do
+  case "$arg" in
+  -l | --logo | --logo-type | --logo=* | --logo-type=*) exec "$REAL" "$@" ;;
+  esac
+done
+
+shopt -s nullglob
+variants=("$VARIANTS"/*.txt)
+(("${#variants[@]}")) || exec "$REAL" "$@"
+
+# $RANDOM is seeded from time+pid and visibly correlates across rapid spawns,
+# which is exactly how the About window's render loop calls this.
+index=$(($(od -An -N4 -tu4 </dev/urandom) % ${#variants[@]}))
+
+exec "$REAL" "$@" --logo-type file --logo "${variants[index]}"

@@ -1,0 +1,62 @@
+{
+  // Extend the Quickshell Omarchy menu with JSONC.
+  //
+  // IDs are object keys. The parent is inferred from the dotted id, so
+  // "personal.notes" appears under "personal", and "personal" appears on the
+  // root menu. Reuse an existing id to override/extend it.
+  //
+  // Fields:
+  //   icon        Nerd Font glyph shown in the icon column.
+  //   label       Visible row title.
+  //   action      Shell command to run. If omitted, the row is a submenu.
+  //   target      Existing submenu id to open. Use for links/aliases.
+  //   provider    Runtime provider function/command returning JSON rows.
+  //   aliases     alternate `omarchy menu summon <name>` routes; also searchable.
+  //   description Optional subtitle and extra search text.
+  //   when        Shell condition; hide row when it fails.
+  //   checked     Shell condition; append ✓ when it succeeds.
+  //
+  // Examples:
+  // "personal": {"icon":"","label":"Personal"},
+  // "personal.notes": {"icon":"󰎞","label":"Notes","action":"omarchy-launch-editor ~/notes"},
+  // "personal.files": {"icon":"","label":"Files","action":"uwsm-app -- nautilus ~/Documents"},
+  //
+  // Only use provider when a provider_name function or command named "name"
+  // returns JSON rows. Static submenus only need dotted ids.
+  //
+  // Example: replace the default About action by reusing the same id. Existing
+  // fields are kept unless overridden.
+  // "about": {"icon":"","label":"About","action":"omarchy-launch-or-focus-tui \"zsh -c 'fastfetch; read -k 1'\""},
+
+  // About, but the logo cycles through ~/.config/omarchy/branding/about-variants
+  // with a random ttfx effect each time. Absolute path because the shell spawns
+  // this and its PATH need not carry ~/.local/bin.
+  // icon/label restated: a partial override normalizes missing fields to
+  // empty, so omitting them blanks the stock icon and lowercases the label.
+  "about": {"icon":"","label":"About","action":"__ROMULUX_HOME__/.local/bin/omarchy-about-cycle"},
+
+  // Style submenu hidden: the system is locked to the Romulan look, so the
+  // theme/background/font/bar editors have nothing left to choose between.
+  // icon/label restated because a partial override blanks omitted fields.
+  // To restore, delete this row (or flip `when` to "true").
+  "style": {"icon":"","label":"Style","when":"false"},
+
+  // Learn submenu hidden from the Super+Space root menu: the manual/wiki
+  // links are all a browser bookmark away, so the row was just noise here.
+  // icon/label restated because a partial override blanks omitted fields.
+  // To restore, delete this row (or flip `when` to "true").
+  "learn": {"icon":"󰧑","label":"Learn","when":"false"},
+
+  // Wordmark rebrand: the two menu rows that render the literal "Omarchy"
+  // label. All other fields restated verbatim from the stock rows, because a
+  // partial override blanks omitted fields rather than inheriting them.
+  // "learn.omarchy" is kept only so the rebrand survives if the hidden
+  // "learn" row above is ever restored; unreachable while Learn is hidden.
+  "learn.omarchy": {"icon":"","label":"Romulux","action":"omarchy-launch-webapp 'https://omarchy.org/manual/'"},
+  // The stock row draws U+E900 from the packaged "omarchy" icon font, i.e.
+  // the Omarchy clamp mark. Menu rows can only render a font glyph (the
+  // Image branch in Menu.qml is reserved for kind=="app"), so the rebrand
+  // swaps in the warbird (md-bird) from the menu font's Nerd Font fallback
+  // and drops iconFont so the row stops reaching for omarchy.ttf.
+  "update.omarchy": {"icon":"󱗆","label":"Romulux","action":"omarchy-launch-floating-terminal-with-presentation omarchy-update"}
+}

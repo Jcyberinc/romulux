@@ -1,0 +1,79 @@
+#!/bin/bash
+# Detects when a package update has restored Omarchy defaults that were
+# customised for Romulux, and tells you about it. Installed as the
+# post-update hook (~/.config/omarchy/hooks/post-update.d/romulux-reapply
+# is a shim that calls this file), and safe to run by hand any time.
+#
+# This script is deliberately unprivileged and makes no changes. It only
+# reports. The repair step needs root and is left for you to run deliberately:
+#
+#     pkexec ~/.local/bin/romulux-reapply-root
+#
+# pkexec and not sudo: sudo cannot prompt for a password without a TTY on this
+# machine, so it fails when run from an agent session or any other
+# non-terminal context.
+#
+# Each check below must stay in lockstep with the matching block in
+# romulux-reapply-root -- this file asks "is it reverted?", that one fixes it.
+# What the update can revert (all package-owned paths):
+#   - the floating-terminal window title is reset to "Omarchy"
+#   - the wayland session entry is regenerated from the packaged template
+#   - /etc/os-release is restored by an omarchy-settings reinstall
+#   - the boot splash is pointed back at the stock plymouth theme
+#
+# User-owned customisations are not affected and never need repair: the menu
+# overrides, the cloned plugins, the hypr configs, all branding artwork, and
+# ~/.config/fastfetch/config.jsonc (which is why the About-screen version line
+# is no longer checked here -- it moved out of /etc and can no longer revert).
+#
+# The stock themes under $OMARCHY_PATH/themes are not checked either. They are
+# reinstalled by every omarchy update by design, and the hidden Style submenu
+# already makes them unreachable, so there is nothing to report.
+set -euo pipefail
+
+OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
+# The real script; $OMARCHY_PATH/bin/<name> is a packaged symlink to it. See the
+# matching comment in romulux-reapply-root for why the link must not be edited.
+TERMINAL_BIN=/usr/bin/omarchy-launch-floating-terminal-with-presentation
+TERMINAL_LINK="$OMARCHY_PATH/bin/omarchy-launch-floating-terminal-with-presentation"
+SESSION=/usr/local/share/wayland-sessions/omarchy.desktop
+PLYMOUTH_THEME=omarchy-ascii
+
+reverted=()
+
+if [[ -f $TERMINAL_BIN ]] && grep -q -- '--title=Omarchy' "$TERMINAL_BIN"; then
+  reverted+=("floating terminal title reset to Omarchy")
+fi
+
+if [[ -e $TERMINAL_LINK && ! -L $TERMINAL_LINK ]]; then
+  reverted+=("packaged symlink at $TERMINAL_LINK replaced by a detached copy")
+fi
+
+if [[ -f $SESSION ]] && grep -q '^Name=Omarchy' "$SESSION"; then
+  reverted+=("login session name reset to Omarchy")
+fi
+
+if [[ -f /etc/os-release ]] && grep -q '^NAME="Omarchy"' /etc/os-release; then
+  reverted+=("os-release name reset to Omarchy")
+fi
+
+if [[ -d /usr/share/plymouth/themes/$PLYMOUTH_THEME ]] \
+   && [[ "$(plymouth-set-default-theme 2>/dev/null)" != "$PLYMOUTH_THEME" ]]; then
+  reverted+=("boot splash reset to the stock plymouth theme")
+fi
+
+if (( ${#reverted[@]} == 0 )); then
+  exit 0
+fi
+
+echo
+echo "Romulux: this update restored some Omarchy defaults:"
+for item in "${reverted[@]}"; do
+  echo "  - $item"
+done
+echo
+echo "To re-apply, run:  pkexec ~/.local/bin/romulux-reapply-root"
+echo
+
+omarchy-notification-send "Romulux branding reverted" \
+  "$(printf '%s; ' "${reverted[@]}")Run: pkexec ~/.local/bin/romulux-reapply-root" 2>/dev/null || true

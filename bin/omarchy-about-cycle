@@ -1,0 +1,294 @@
+#!/bin/bash
+
+# An About screen that cycles the logo variants with ttfx effects, the way the
+# screensaver cycles its own. Stands beside omarchy-launch-about rather than
+# replacing it: /usr/share/omarchy/bin symlinks that command and sits first on
+# PATH, so it cannot be shadowed. Point the menu's "about" action here instead.
+
+set -uo pipefail
+
+VARIANTS_DIR="$HOME/.config/omarchy/branding/about-variants"
+FIT_FILE="$HOME/.local/state/omarchy/windows/about-cycle.fit"
+HOLD=${OMARCHY_ABOUT_HOLD:-5}   # seconds a logo rests before the next effect
+
+LOGO_W=52                       # every variant is exactly 52x19; the fastfetch
+LOGO_H=19                       # wrapper's header explains why that must hold
+TOP_PAD=2                       # rows above the logo, from the fastfetch config
+GAP=6                           # columns between logo and modules
+SIDE_PAD=2
+
+CANVAS_W=58                     # < 61, so the canvas never reaches the modules
+CANVAS_H=24                     # (24-19)/2 puts the art on row 3, where fastfetch draws it
+
+MODULES_COL=$((SIDE_PAD + LOGO_W + GAP + 1))
+
+MAX_EFFECT_MS=5000
+
+# Effect plus the frame rate that brings it in under MAX_EFFECT_MS. ttfx paces a
+# fixed number of frames, so raising the rate shortens the run without dropping
+# any of it -- these are measured, not guessed: at the default 120 the twelve
+# slowest ran 5.1s to 24s, and these rates put every one near 4.5s.
+#
+# Left out: overflow scrolls the terminal and drags the readings out of place;
+# matrix, synthgrid and rings spend the run painting outside the ship's outline
+# instead of assembling it (0.22/0.28/0.34 of drawn cells on the artwork, against
+# 0.46 or better for everything kept); and thunderstorm is paced by wall clock
+# rather than frames, so it holds at ~12.4s whatever the rate.
+EFFECTS=(
+  swarm:700 fireworks:283 orbittingvolley:239 blackhole:196 decrypt:189
+  binarypath:189 vhstape:158 laseretch:153 bubbles:149 spotlights:141
+  print:138 burn:131 waves:120 colorshift:120 bouncyballs:120 crumble:120
+  spray:120 pour:120 errorcorrect:120 randomsequence:120 beams:120
+  unstable:120 rain:120 sweep:120 smoke:120 slice:120 scattered:120
+  wipe:120 highlight:120 slide:120 middleout:120 expand:120
+)
+
+# fastfetch draws the logo bold-green, and foot maps bold to the palette's
+# regular2 rather than bright2 (bold-text-in-bright defaults off). Landing the
+# effect on that exact colour is what makes the hand-off to the static frame
+# invisible rather than a colour snap.
+theme_green() {
+  local hex
+  hex=$(sed -n 's/^regular2=\([0-9A-Fa-f]\{6\}\).*$/\1/p' \
+    "$HOME/.local/state/omarchy/current/theme/foot.ini" 2>/dev/null | head -1)
+  printf '%s' "${hex:-419B47}"
+}
+
+# wc -L only counts display columns in a UTF-8 locale; without one the box glyphs
+# measure as zero and the window comes out too narrow.
+display_columns() { LC_ALL=C.UTF-8 wc -L; }
+
+modules_block() { fastfetch --logo none | sed 's/\x1b\[[0-9;?]*[a-zA-Z]//g'; }
+
+target_grid() {
+  local block module_w module_h
+  block=$(modules_block; printf X); block=${block%X}
+  module_w=$(printf '%s' "$block" | display_columns)
+  module_h=$(printf '%s' "$block" | wc -l)
+  target_c=$((SIDE_PAD + LOGO_W + GAP + module_w + SIDE_PAD))
+  target_r=$(( (LOGO_H + TOP_PAD > module_h ? LOGO_H + TOP_PAD : module_h) + 1 ))
+}
+
+apply_size_rule() {
+  local rule=""
+  (($# == 2)) && rule="omarchy_about_cycle_rule = hl.window_rule({ match = { class = \"org.omarchy.about\" }, size = { $1, $2 } })"
+  hyprctl eval "if omarchy_about_cycle_rule then omarchy_about_cycle_rule:set_enabled(false) end; omarchy_about_cycle_rule = nil; $rule" >/dev/null 2>&1
+}
+
+# ---------------------------------------------------------------- launcher mode
+
+if [[ ${1:-} != --render ]]; then
+  # Open at the size that fit last time, so the window maps at its final size
+  # instead of resizing after the first paint. A cache cut for a different grid
+  # is ignored and re-measured below.
+  if [[ -r $FIT_FILE ]]; then
+    target_grid
+    read -r fit_c fit_r fit_w fit_h <"$FIT_FILE"
+    if [[ $fit_c == "$target_c" && $fit_r == "$target_r" && $fit_w =~ ^[0-9]+$ && $fit_h =~ ^[0-9]+$ ]]; then
+      apply_size_rule "$fit_w" "$fit_h"
+    else
+      apply_size_rule
+    fi
+  else
+    apply_size_rule
+  fi
+  # Re-enter by absolute path. The menu action is spawned by the shell, whose PATH
+  # need not carry ~/.local/bin -- omarchy only appends that in its bash rc.
+  exec omarchy-launch-or-focus-tui --app-id=org.omarchy.about "$(realpath "$0")" --render
+fi
+
+# ------------------------------------------------------------------ render mode
+
+shopt -s nullglob
+variants=("$VARIANTS_DIR"/*.txt)
+if ((${#variants[@]} == 0)); then
+  echo "No logo variants in $VARIANTS_DIR" >&2
+  exit 1
+fi
+
+tty_name=$(tty 2>/dev/null); tty_name=${tty_name#/dev/}
+padded=$(mktemp)
+trap 'rm -f "$padded"; printf "\033[?25h"' EXIT
+
+cleanup_and_exit() {
+  pkill -t "$tty_name" -x ttfx 2>/dev/null
+  printf '\033[?25h'
+  exit 0
+}
+trap cleanup_and_exit SIGINT SIGTERM SIGHUP
+
+# Terminals hand out an 80x24 pty and only resize once the compositor has sized
+# the window. ttfx measures the terminal once at startup, so a canvas built
+# before the resize lands would be cut for the wrong window.
+wait_for_terminal_resize() {
+  local deadline=$((SECONDS + 2))
+  while ((SECONDS < deadline)) && [[ $(stty size 2>/dev/null) == "24 80" ]]; do
+    sleep 0.02
+  done
+}
+
+# Hyprland animates the resize and the terminal reflows to every step, so let the
+# grid hold still before measuring it.
+settle_grid() {
+  local current previous="" held=0
+  for _ in {1..20}; do
+    current=$(stty size)
+    if [[ $current == $previous ]]; then
+      ((++held == 3)) && break
+    else
+      held=0; previous=$current
+    fi
+    sleep 0.05
+  done
+}
+
+remember_fit() {
+  local dir tmp; dir=$(dirname "$FIT_FILE"); mkdir -p "$dir"
+  tmp=$(mktemp "$dir/.about-cycle.fit.XXXXXX")
+  printf '%s %s %s %s\n' "$1" "$2" "$3" "$4" >"$tmp"
+  mv "$tmp" "$FIT_FILE"
+}
+
+# Nudge the window until the terminal grid matches the layout, then remember the
+# pixel size that got there so the next launch can open at it directly.
+fit_window() {
+  target_grid
+  local nudges=0 rows cols address width height shift_w shift_h want_w want_h
+  while :; do
+    read -r rows cols <<<"$(stty size)"
+    read -r address width height <<<"$(hyprctl clients -j | jq -r '.[] | select(.class == "org.omarchy.about") | "\(.address) \(.size[0]) \(.size[1])"')"
+    [[ -n ${address:-} ]] || return 1
+    ((cols > 0 && rows > 0 && width > 0 && height > 0)) || return 1
+
+    # A window has to land on the terminal's cell boundaries, so take a cell of
+    # slack rather than chasing an exact grid.
+    if ((cols >= target_c && cols <= target_c + 1 && rows >= target_r && rows <= target_r + 1)); then
+      remember_fit "$target_c" "$target_r" "$width" "$height"
+      return 0
+    fi
+    ((++nudges <= 2)) || return 1
+
+    shift_w=$(((target_c - cols) * width))
+    shift_h=$(((target_r - rows) * height))
+    want_w=$((width + (shift_w >= 0 ? (shift_w + cols - 1) / cols : shift_w / cols)))
+    want_h=$((height + (shift_h >= 0 ? (shift_h + rows - 1) / rows : shift_h / rows)))
+
+    hyprctl dispatch "hl.dsp.window.resize({ window = \"address:$address\", x = $want_w, y = $want_h })" >/dev/null 2>&1 ||
+      hyprctl dispatch resizewindowpixel "exact $want_w $want_h,address:$address" >/dev/null 2>&1
+    hyprctl dispatch "hl.dsp.window.center({ window = \"address:$address\" })" >/dev/null 2>&1 ||
+      hyprctl dispatch centerwindow >/dev/null 2>&1
+    settle_grid
+  done
+}
+
+paint() {
+  # Render before clearing, then put the clear and the frame out in one write.
+  # Clearing first and letting fastfetch draw into the empty screen leaves it
+  # blank for as long as fastfetch takes to run, which reads as a flash between
+  # the effect finishing and the static frame arriving.
+  local frame
+  frame=$(fastfetch --logo-type file --logo "$1" --pipe false)
+  printf '\033[2J\033[H%s' "$frame"
+}
+
+# The readings drift (uptime, memory), so re-read them rather than caching once.
+capture_modules() { mapfile -t module_lines < <(fastfetch --logo none --pipe false); }
+
+# Put the readings up without a logo beside them, so the screen is never just an
+# empty canvas. fastfetch would left-align them with no logo to indent past, so
+# address each row directly at the column the composed frame uses.
+# $1 shifts every row down. Erase-to-end-of-line on each row matters as much as
+# the text: the blank lines in the block write nothing, so without it a copy left
+# a row off by an earlier draw stays on screen underneath this one. The cursor is
+# already past the canvas, so only the readings' own columns are cleared.
+draw_modules() {
+  local off=${1:-0} i
+  for i in "${!module_lines[@]}"; do
+    printf '\033[%d;%dH\033[K%s' "$((i + 1 + off))" "$MODULES_COL" "${module_lines[i]}"
+  done
+}
+
+animate() {
+  sed 's/^/  /' "$1" >"$padded"   # left padding, matching the config's 2 columns
+
+  local pick=${EFFECTS[RANDOM % ${#EFFECTS[@]}]}
+  local effect=${pick%:*} rate=${pick#*:}
+
+  # ttfx takes exactly one scroll as it starts, which lifts whatever is already on
+  # screen by a row -- that was the readings jumping when the effect handed back to
+  # the static frame. Put them a row low first so that scroll lands them where
+  # paint() will draw them, and they never appear to move at all.
+  draw_modules 1
+  printf '\033[H'
+
+  ttfx -i "$padded" \
+    --canvas-width "$CANVAS_W" --canvas-height "$CANVAS_H" \
+    --anchor-canvas nw --anchor-text w \
+    --reuse-canvas --no-restore-cursor --no-eol --frame-rate "$rate" \
+    "$effect" --final-gradient-stops "$LOGO_GREEN" --final-gradient-steps 1 &
+  local ttfx_pid=$! ticks=0 limit=$((MAX_EFFECT_MS / 100))
+
+  while kill -0 "$ttfx_pid" 2>/dev/null; do
+    if read -rsn1 -t 0.1; then
+      kill "$ttfx_pid" 2>/dev/null
+      wait "$ttfx_pid" 2>/dev/null
+      cleanup_and_exit
+    fi
+    # Insurance on the pre-compensation above: once the scroll has certainly
+    # happened, put the readings at their true rows. A no-op when the scroll went
+    # as expected, and a correction if it ever stops happening.
+    ((ticks == 5)) && draw_modules
+
+    # Backstop for an effect that outruns its measured rate. paint() draws the
+    # finished logo straight after, and the effect is already on the final
+    # colour, so a cut shows up as the art completing rather than a jump.
+    if ((++ticks >= limit)); then
+      kill "$ttfx_pid" 2>/dev/null
+      break
+    fi
+  done
+  wait "$ttfx_pid" 2>/dev/null
+}
+
+wait_for_terminal_resize
+settle_grid
+printf '\033[?25l\033[2J'
+# Put the readings up before the first effect runs, so the screen is never just a
+# logo assembling against nothing.
+capture_modules
+draw_modules
+LOGO_GREEN=$(theme_green)
+last_size=$(stty size)
+fitted=false
+fit_attempts=0
+
+# Walk a fresh shuffle each pass, so every variant shows before any repeats.
+# Shuffle into an array rather than piping into the loop: `while read; do ... done
+# < <(shuf)` would point the loop body's stdin at that pipe, and the keypress poll
+# would read variant paths off it and quit before drawing a single frame.
+while :; do
+  mapfile -t order < <(printf '%s\n' "${variants[@]}" | shuf)
+  for variant in "${order[@]}"; do
+    capture_modules
+    animate "$variant"
+    paint "$variant"
+
+    # Give up after a few passes rather than re-measuring forever: outside
+    # Hyprland there is no window to fit, and each attempt costs two fastfetch runs.
+    if [[ $fitted == false ]] && ((++fit_attempts <= 3)); then
+      fit_window && fitted=true
+      last_size=$(stty size)
+    fi
+
+    # Rest on the settled frame, but stay responsive to a keypress.
+    end=$((SECONDS + HOLD))
+    while ((SECONDS < end)); do
+      read -rsn1 -t 0.2 && cleanup_and_exit
+      # A resized window reflows the modules column, so redraw where it now sits.
+      if [[ $(stty size) != "$last_size" ]]; then
+        last_size=$(stty size)
+        paint "$variant"
+      fi
+    done
+  done
+done
